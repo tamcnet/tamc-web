@@ -15,12 +15,12 @@
                           :aspect-ratio="3/2"
                         ></v-img>
                         <v-card-title class="flex-column align-start white-text" style="height: auto; display: block;">
-                            <div class="text-h4 mb-2" style="white-space: pre-line;">富士山: {{ flags[2] }}</div>
+                            <div class="text-h4 mb-2" style="white-space: pre-line;">富士山の可視性: {{ flags[latestResult[index]] }}</div>
                             <div class="text-h6 font-weight-regular text-grey" style="white-space: pre-line;">
                                 {{ observedTimes[index] }}
                             </div>
                             <div class="text-h6 font-weight-regular text-grey" style="white-space: pre-line;">
-                                {{ obsEx[2] }}
+                                {{ obsEx[latestResult[index]] }}
                             </div>
                         </v-card-title>
                     </v-card>
@@ -39,14 +39,14 @@ export default {
         return {
             latestMedias: [],
             realtimeDataType: ["視程距離", "富士山", "流星"],
-            flags: {0: "False", 1: "True", 2: "不明"},
+            flags: {0: "×", 1: "△", 2: "〇"},
             latestResult: [],
             observedTimes: [],
             interval: -1,
             obsEx: {
-                0: "富士山の確認不可",
-                1: "富士山の確認可能",
-                2: "不明",
+                0: "見えない",
+                1: "部分的に見える",
+                2: "見える",
             },
         };
     },
@@ -75,15 +75,22 @@ export default {
         async fetchlatestResults() {
             try {
                 const Fuji_class1 = await axios.get("https://toms-server.tail2925.ts.net/Fuji_latest_class");
-                const Fuji_class2 = await axios.get("https://toms-server.tail2925.ts.net/Fuji_30minago_class");
-                const Fuji_class3 = await axios.get("https://toms-server.tail2925.ts.net/Fuji_60minago_class");
                 const visFujiRes1 = Fuji_class1.data[0];
+                this.latestResult.push(visFujiRes1);
+                const Fuji_class2 = await axios.get("https://toms-server.tail2925.ts.net/Fuji_30minago_class");
                 const visFujiRes2 = Fuji_class2.data[0];
+                this.latestResult.push(visFujiRes2);
+                const Fuji_class3 = await axios.get("https://toms-server.tail2925.ts.net/Fuji_60minago_class");
                 const visFujiRes3 = Fuji_class3.data[0];
-                this.latestResult = [visFujiRes1, visFujiRes2, visFujiRes3];
+                this.latestResult.push(visFujiRes3);
+                
+                
+                
+                
+                
             } catch (error) {
                 console.log("Error fetching latestResults: ", error);
-            }
+            } 
         },
         async fetchObservedTime() {
             try {

@@ -99,7 +99,7 @@ export default {
         return {
             meteorologyData: {
                 medias: [],
-                types: ["立川高校から見える距離（視程）", "富士山の有無"],
+                types: ["立川高校から見える距離（視程）", "富士山の可視性"],
                 icons: ["mdi-eye-outline", "mdi-image-filter-hdr-outline"],
                 results: [],
                 times: [],
@@ -120,7 +120,7 @@ export default {
                 ]
             },
             visDis: {0:"0~0.1km", 1: "0.45km", 2: "0.75km", 3: "1.0km", 4: "3.0km", 5: "4.3km", 6: "4.9km", 7:"13km", 8: "25km", 9: "36km~"},
-            Fujiobs: {0: "富士山の確認不可", 1: "富士山の確認可能", 2: "不明"},
+            Fujiobs: {0: "×", 1: "△", 2: "〇"},
             interval: -1,
             directionMap: {
                 'Zenith': '天頂',
@@ -173,12 +173,13 @@ export default {
                 const sunspotInfo = await axios.get("https://toms-server.tail2925.ts.net/manualReport/sunspot/info");
                 
                 const visTreeRes = latest_class.data[0];
+                const fujivisRes = Fujilatest_class.data[0];
                 const meteorRes = meteor_dir.data[0];
                 const sunspotArea = sunspotInfo.data.total_area;
                 
                 this.meteorologyData.results = [
                     this.visDis[visTreeRes],
-                    this.Fujiobs[2]
+                    this.Fujiobs[fujivisRes]
                 ];
                 this.astronomyData.results = [
                     meteorRes,
