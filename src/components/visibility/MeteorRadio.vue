@@ -74,7 +74,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import api from '@/lib/api';
 
 export default {
   name: 'MeteorRadio',
@@ -100,14 +100,15 @@ export default {
   methods: {
     async fetchMeteorLatestImages() {
       try {
-        const ToyokawaimageUrl1 = "https://toms-server.tail2925.ts.net/Toyokawa_latest_img";
-        const OtsuimageUrl1 = "https://toms-server.tail2925.ts.net/Otsu_latest_img";
-        const ToyokawaMeteorimageUrl1 = "https://toms-server.tail2925.ts.net/Toyokawa_latest_meteor_img";
-        const ToyokawaMeteorimageUrl2 = "https://toms-server.tail2925.ts.net/Toyokawa_latest2_meteor_img";
-        const ToyokawaMeteorimageUrl3 = "https://toms-server.tail2925.ts.net/Toyokawa_latest3_meteor_img";
-        const OtsuMeteorimageUrl1 = "https://toms-server.tail2925.ts.net/Otsu_latest_meteor_img";
-        const OtsuMeteorimageUrl2 = "https://toms-server.tail2925.ts.net/Otsu_latest2_meteor_img";
-        const OtsuMeteorimageUrl3 = "https://toms-server.tail2925.ts.net/Otsu_latest3_meteor_img";
+        const base = import.meta.env.VITE_API_BASE_URL;
+        const ToyokawaimageUrl1 = `${base}/Toyokawa_latest_img`;
+        const OtsuimageUrl1 = `${base}/Otsu_latest_img`;
+        const ToyokawaMeteorimageUrl1 = `${base}/Toyokawa_latest_meteor_img`;
+        const ToyokawaMeteorimageUrl2 = `${base}/Toyokawa_latest2_meteor_img`;
+        const ToyokawaMeteorimageUrl3 = `${base}/Toyokawa_latest3_meteor_img`;
+        const OtsuMeteorimageUrl1 = `${base}/Otsu_latest_meteor_img`;
+        const OtsuMeteorimageUrl2 = `${base}/Otsu_latest2_meteor_img`;
+        const OtsuMeteorimageUrl3 = `${base}/Otsu_latest3_meteor_img`;
 
         this.ToyokawalatestImage = ToyokawaimageUrl1;
         this.OtsulatestImage = OtsuimageUrl1;
@@ -131,10 +132,10 @@ export default {
     },
     async fetchMeteorInfo() {
       try {
-        const response_toyokawa = await axios.get("https://toms-server.tail2925.ts.net/Toyokawa_info");
-        const response_otsu = await axios.get("https://toms-server.tail2925.ts.net/Otsu_info");
-        const response_meteor_toyokawa = await axios.get("https://toms-server.tail2925.ts.net/Toyokawa_meteor_info");
-        const response_meteor_otsu = await axios.get("https://toms-server.tail2925.ts.net/Otsu_meteor_info");
+        const response_toyokawa = await api.get("/Toyokawa_info");
+        const response_otsu = await api.get("/Otsu_info");
+        const response_meteor_toyokawa = await api.get("/Toyokawa_meteor_info");
+        const response_meteor_otsu = await api.get("/Otsu_meteor_info");
 
         this.ToyokawalatestTime = response_toyokawa.data;
         this.OtsulatestTime = response_otsu.data;

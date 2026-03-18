@@ -126,14 +126,14 @@
 import { reactive, ref, computed, onMounted } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
-import axios from 'axios';
+import api from '@/lib/api';
 
 export default {
   setup() {
     const isUpdating = ref(false);
     const title = ref('自作自動観測装置の観測画像');
     const types = ref(['壱号機(スカイツリー方面)', '参号機(富士山方面)', 'まとめ画像(スカイツリー方面)']);
-    const baseUrl = ref('https://toms-server.tail2925.ts.net');
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
     const infos = ref([]);
     const count = ref(0);
     
@@ -200,7 +200,7 @@ export default {
           params.H = selectData.hour;
         }
 
-        const response = await axios.get('https://toms-server.tail2925.ts.net/searchImages/', { params });
+        const response = await api.get('/searchImages/', { params });
         const data = response.data;
 
         infos.value = (data.urls || []).map((url, i) => ({

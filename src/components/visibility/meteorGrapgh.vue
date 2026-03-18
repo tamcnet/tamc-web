@@ -22,7 +22,7 @@
 </template>
   
 <script>
-import axios from 'axios';
+import api from '@/lib/api';
 import Chart from 'chart.js/auto';
   
 export default {
@@ -32,7 +32,7 @@ export default {
     endpoints: {
       type: Array,
       default: () => [
-        "https://toms-server.tail2925.ts.net/Meteor_count"
+        "/Meteor_count"
       ],
     },
   },
@@ -47,7 +47,7 @@ export default {
   methods: {
     async fetchData(endpoint, index) {
       try {
-        const response = await axios.get(endpoint);
+        const response = await api.get(endpoint);
         const data = response.data;
         console.log(`Data for ${endpoint}:`, data);
         const values = data.map(entry => entry[1]);

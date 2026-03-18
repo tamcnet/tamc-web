@@ -92,7 +92,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import api from '@/lib/api';
 
 export default {
     data() {
@@ -135,11 +135,11 @@ export default {
         async fetchlatestMedias() {
             try {
                 // Meteorology データ
-                const visTree = await axios.get("https://toms-server.tail2925.ts.net/latest_image", { responseType: 'blob' });
-                const visFuji = await axios.get("https://toms-server.tail2925.ts.net/Fuji_latest_image", { responseType: 'blob' });
+                const visTree = await api.get("/latest_image", { responseType: 'blob' });
+                const visFuji = await api.get("/Fuji_latest_image", { responseType: 'blob' });
                 // Astronomy データ
-                const metVideo = "https://toms-server.tail2925.ts.net/Meteor_latest_video";
-                const sunspotImage = await axios.get("https://toms-server.tail2925.ts.net/manualReport/sunspot/info");
+                const metVideo = `${import.meta.env.VITE_API_BASE_URL}/Meteor_latest_video`;
+                const sunspotImage = await api.get("/manualReport/sunspot/info");
                 
                 // 古い Blob URL を解放
                 this.meteorologyData.medias.forEach(url => {
@@ -151,7 +151,7 @@ export default {
 
                 const visTreeBlob = new Blob([visTree.data]);
                 const visFujiBlob = new Blob([visFuji.data]);
-                const sunspotImageUrl = `https://toms-server.tail2925.ts.net${sunspotImage.data.image_url}`;
+                const sunspotImageUrl = `${import.meta.env.VITE_API_BASE_URL}${sunspotImage.data.image_url}`;
                 
                 this.meteorologyData.medias = [
                     URL.createObjectURL(visTreeBlob),
@@ -167,10 +167,10 @@ export default {
         },
         async fetchlatestResults() {
             try {
-                const latest_class = await axios.get("https://toms-server.tail2925.ts.net/latest_class");
-                const Fujilatest_class = await axios.get("https://toms-server.tail2925.ts.net/Fuji_latest_class");
-                const meteor_dir = await axios.get("https://toms-server.tail2925.ts.net/Meteor_info");
-                const sunspotInfo = await axios.get("https://toms-server.tail2925.ts.net/manualReport/sunspot/info");
+                const latest_class = await api.get("/latest_class");
+                const Fujilatest_class = await api.get("/Fuji_latest_class");
+                const meteor_dir = await api.get("/Meteor_info");
+                const sunspotInfo = await api.get("/manualReport/sunspot/info");
                 
                 const visTreeRes = latest_class.data[0];
                 const fujivisRes = Fujilatest_class.data[0];
@@ -191,10 +191,10 @@ export default {
         },
         async fetchObservedTime() {
             try {
-                const latest_time = await axios.get("https://toms-server.tail2925.ts.net/latest_info");
-                const Fujilatest_time = await axios.get("https://toms-server.tail2925.ts.net/Fuji_latest_info");
-                const meteor_time = await axios.get("https://toms-server.tail2925.ts.net/Meteor_info");
-                const sunspotInfo = await axios.get("https://toms-server.tail2925.ts.net/manualReport/sunspot/info");
+                const latest_time = await api.get("/latest_info");
+                const Fujilatest_time = await api.get("/Fuji_latest_info");
+                const meteor_time = await api.get("/Meteor_info");
+                const sunspotInfo = await api.get("/manualReport/sunspot/info");
 
                 const visTreeTime = latest_time.data.time;
                 const visFujiTime = Fujilatest_time.data.time;

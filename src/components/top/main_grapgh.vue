@@ -24,7 +24,7 @@
 
 
 <script>
-import axios from 'axios';
+import api from '@/lib/api';
 import Chart, { Legend, plugins, Ticks } from 'chart.js/auto';
 
 export default {
@@ -34,9 +34,9 @@ export default {
     endpoints: {
       type: Array,
       default: () => [
-        "https://toms-server.tail2925.ts.net/latest/temper",
-        "https://toms-server.tail2925.ts.net/latest/humidity",
-        "https://toms-server.tail2925.ts.net/latest/pressure"
+        "/latest/temper",
+        "/latest/humidity",
+        "/latest/pressure"
       ]
     }
   },
@@ -51,7 +51,7 @@ export default {
   methods: {
     async fetchData(endpoint, index) {
       try {
-        const response = await axios.get(endpoint);
+        const response = await api.get(endpoint);
         const data = response.data;
         console.log(`Data for ${endpoint}:`, data);
         const values = data.map(entry => entry[1]);

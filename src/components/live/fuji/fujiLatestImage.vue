@@ -32,7 +32,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import api from '@/lib/api';
 
 export default {
     data() {
@@ -53,9 +53,9 @@ export default {
     methods: {
         async fetchlatestMedias() {
             try {
-                const visFuji1 = await axios.get("https://toms-server.tail2925.ts.net/Fuji_latest_image", { responseType: 'blob' });
-                const visFuji2 = await axios.get("https://toms-server.tail2925.ts.net/Fuji_30minago_image", { responseType: 'blob' });
-                const visFuji3 = await axios.get("https://toms-server.tail2925.ts.net/Fuji_60minago_image", { responseType: 'blob' });
+                const visFuji1 = await api.get("/Fuji_latest_image", { responseType: 'blob' });
+                const visFuji2 = await api.get("/Fuji_30minago_image", { responseType: 'blob' });
+                const visFuji3 = await api.get("/Fuji_60minago_image", { responseType: 'blob' });
                 // 古い Blob URL を解放
                 this.latestMedias.forEach(url => URL.revokeObjectURL(url));
 
@@ -74,13 +74,13 @@ export default {
         },
         async fetchlatestResults() {
             try {
-                const Fuji_class1 = await axios.get("https://toms-server.tail2925.ts.net/Fuji_latest_class");
+                const Fuji_class1 = await api.get("/Fuji_latest_class");
                 const visFujiRes1 = Fuji_class1.data[0];
                 this.latestResult.push(visFujiRes1);
-                const Fuji_class2 = await axios.get("https://toms-server.tail2925.ts.net/Fuji_30minago_class");
+                const Fuji_class2 = await api.get("/Fuji_30minago_class");
                 const visFujiRes2 = Fuji_class2.data[0];
                 this.latestResult.push(visFujiRes2);
-                const Fuji_class3 = await axios.get("https://toms-server.tail2925.ts.net/Fuji_60minago_class");
+                const Fuji_class3 = await api.get("/Fuji_60minago_class");
                 const visFujiRes3 = Fuji_class3.data[0];
                 this.latestResult.push(visFujiRes3);
                 
@@ -94,9 +94,9 @@ export default {
         },
         async fetchObservedTime() {
             try {
-                const Fujilatest_time = await axios.get("https://toms-server.tail2925.ts.net/Fuji_latest_info");
-                const Fuji30min_time = await axios.get("https://toms-server.tail2925.ts.net/Fuji_30minago_info");
-                const Fuji60min_time = await axios.get("https://toms-server.tail2925.ts.net/Fuji_60minago_info");
+                const Fujilatest_time = await api.get("/Fuji_latest_info");
+                const Fuji30min_time = await api.get("/Fuji_30minago_info");
+                const Fuji60min_time = await api.get("/Fuji_60minago_info");
 
                 const visFujiTime1 = Fujilatest_time.data.time;
                 const visFujiTime2 = Fuji30min_time.data.time;

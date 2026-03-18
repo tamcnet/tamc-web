@@ -29,7 +29,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import api from '@/lib/api';
 
 export default {
   name: 'Sunspots',
@@ -44,10 +44,10 @@ export default {
   methods: {
     async fetchSunInfos() {
       try {
-        const response = await axios.get("https://toms-server.tail2925.ts.net/manualReport/sunspot/info");
+        const response = await api.get("/manualReport/sunspot/info");
         // 画像URLを直接使用
-        this.latestSunImage = `https://toms-server.tail2925.ts.net${response.data.image_url}`;
-        this.contourSunImage = `https://toms-server.tail2925.ts.net${response.data.contour_image_url}`;
+        this.latestSunImage = `${import.meta.env.VITE_API_BASE_URL}${response.data.image_url}`;
+        this.contourSunImage = `${import.meta.env.VITE_API_BASE_URL}${response.data.contour_image_url}`;
         this.latestSunInfo = response.data;
         this.SunspotImages = [
           this.latestSunImage,

@@ -97,7 +97,7 @@
   
   
 <script>
-import axios from 'axios';
+import api from '@/lib/api';
 import { Chart, LinearScale, CategoryScale, Title, Tooltip, Legend, LineElement, LineController, PointElement, plugins } from 'chart.js';
 Chart.register(LinearScale, CategoryScale, Title, Tooltip, Legend, LineElement, LineController, PointElement);
 
@@ -122,7 +122,7 @@ export default {
       basicInfos: {title: "基本情報", time: "", cpuTemp: "", usbUsage: "", sdUsage: "", temp: "", humis: "", operating: ""},
       usages: {title: "使用率", path: "/", path: "/mnt/usb1", sdUsage: "", usbUsage: ""},
       usaging: {title: "使用状況"},
-      endpoint: "https://toms-server.tail2925.ts.net/3go/usages",
+      endpoint: "/3go/usages",
       lineColors: {
         temperature: 'rgba(255, 99, 132, 1)',
         cpuTemperature: 'rgba(255, 165, 38, 1)'
@@ -135,7 +135,7 @@ export default {
   methods: {
     async fetchLogs() {
       try {
-        const response = await axios.get("https://toms-server.tail2925.ts.net/3go/logs");
+        const response = await api.get("/3go/logs");
         const logs = response.data;
 
         this.notifyErrorLog = logs["notify-error.log"];
@@ -148,7 +148,7 @@ export default {
     },
     async fetchStatus(){
       try {
-        const infos = await axios.get("https://toms-server.tail2925.ts.net/3go/info");
+        const infos = await api.get("/3go/info");
 
         this.basicInfos.time = infos.data.date;
         this.basicInfos.temp = infos.data.temperature;
@@ -163,7 +163,7 @@ export default {
     },
     async fetchData() {
         try {
-            const response = await axios.get(this.endpoint);
+            const response = await api.get(this.endpoint);
             const data = response.data;
 
             console.log("Fetched data:", data);

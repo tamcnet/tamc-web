@@ -91,7 +91,7 @@ import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 // import FileCompo from '@/components/FileInput.vue';
 import { Chart } from 'chart.js/auto';
-import axios from 'axios';
+import api from '@/lib/api';
 
 export default defineComponent({
   name: "App",
@@ -198,12 +198,12 @@ export default defineComponent({
 
       const { formattedStartDate, formattedEndDate } = format(date.value);
 
-      const apiUrl = `https://toms-server.tail2925.ts.net/pastdata/${selectedDataType1.value}/${formattedStartDate}/${formattedEndDate}`;
-      const apiUrl2 = `https://toms-server.tail2925.ts.net/pastdata/${selectedDataType2.value}/${formattedStartDate}/${formattedEndDate}`;
+      const apiUrl = `/pastdata/${selectedDataType1.value}/${formattedStartDate}/${formattedEndDate}`;
+      const apiUrl2 = `/pastdata/${selectedDataType2.value}/${formattedStartDate}/${formattedEndDate}`;
 
       try {
-        const response = await axios.get(apiUrl);
-        const response2 = await axios.get(apiUrl2);
+        const response = await api.get(apiUrl);
+        const response2 = await api.get(apiUrl2);
         const newData = response.data.data;
         const newData2 = response2.data.data;
         const lineChart = Chart.getChart('lineChart');
@@ -247,10 +247,10 @@ export default defineComponent({
 
     const downloadCSV = async () => {
       const { formattedStartDate, formattedEndDate } = format(date.value);
-      const url = `https://toms-server.tail2925.ts.net/pastdata/${selectedDataType1.value}/${selectedDataType2.value}/${formattedStartDate}/${formattedEndDate}`;
+      const url = `/pastdata/${selectedDataType1.value}/${selectedDataType2.value}/${formattedStartDate}/${formattedEndDate}`;
   
       try {
-        const response = await axios.get(url, { responseType: 'blob' });
+        const response = await api.get(url, { responseType: 'blob' });
         const csvUrl = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = csvUrl;
