@@ -33,21 +33,18 @@
 
 <script>
 import api from '@/lib/api';
+import { Fujiobs, fujiObsEx } from '@/lib/constants';
 
 export default {
     data() {
         return {
             latestMedias: [],
             realtimeDataType: ["視程距離", "富士山", "流星"],
-            flags: {0: "×", 1: "△", 2: "〇"},
+            flags: Fujiobs,
+            obsEx: fujiObsEx,
             latestResult: [],
             observedTimes: [],
             interval: -1,
-            obsEx: {
-                0: "見えない",
-                1: "部分的に見える",
-                2: "見える",
-            },
         };
     },
     methods: {

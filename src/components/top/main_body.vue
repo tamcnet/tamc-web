@@ -93,6 +93,7 @@
 
 <script>
 import api from '@/lib/api';
+import { visDis, Fujiobs, directionMap } from '@/lib/constants';
 
 export default {
     data() {
@@ -119,16 +120,10 @@ export default {
                     "黒点は周囲より温度が低く暗く見える太陽表面の領域で、太陽活動の強さを示す手がかりとなる。",
                 ]
             },
-            visDis: {0:"0~0.1km", 1: "0.45km", 2: "0.75km", 3: "1.0km", 4: "3.0km", 5: "4.3km", 6: "4.9km", 7:"13km", 8: "25km", 9: "36km~"},
-            Fujiobs: {0: "×", 1: "△", 2: "〇"},
+            visDis,
+            Fujiobs,
+            directionMap,
             interval: -1,
-            directionMap: {
-                'Zenith': '天頂',
-                'North': '北',
-                'East': '東',
-                'South': '南',
-                'West': '西'
-            }
         };
     },
     methods: {

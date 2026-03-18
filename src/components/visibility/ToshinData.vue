@@ -93,6 +93,7 @@
 
 <script>
 import api from '@/lib/api';
+import { visDis, obsEx } from '@/lib/constants';
 
 export default {
   data() {
@@ -109,22 +110,11 @@ export default {
           obsOnceLog: "",
           Fgo: "",
           latestMedias: [],
-          visDis: {0:"0~0.1km", 1: "0.45km", 2: "0.75km", 3: "1.0km", 4: "3.0km", 5: "4.3km", 6: "4.9km", 7:"13km", 8: "25km", 9: "36km~"},
+          visDis,
+          obsEx,
           latestResult: [],
           observedTimes: [],
           interval: -1,
-          obsEx: {
-            0: "目の前のマンションの識別も難しい",
-            1: "Yazawa Deux Bldgが識別可能",
-            2: "立川病院まで識別可能",
-            3: "ラポール西国立まで識別可能",
-            4: "一橋大学法人本部棟まで識別可能",
-            5: "多摩総合医療センター(府中病院)まで識別可能",
-            6: "ライオンズガーデン西国分寺まで識別可能",
-            7: "グレーシアタワー三鷹まで識別可能",
-            8: "新宿ビル群まで識別可能",
-            9: "東京スカイツリーの識別が可能"
-          },
           vis: {title: "視程推移"},
           basicInfos: {title: "基本情報", time: "", cpuTemp: "", usbUsage: "", sdUsage: "", temp: "", humis: "", operating: ""},
           usages: {title: "使用率", path: "/", path: "/mnt/usb1", sdUsage: "70", usbUsage: "77"},
