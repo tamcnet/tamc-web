@@ -2,7 +2,7 @@
     <div class="equipments">
         <v-container class="mx-auto d-flex align-center justify-center overflow-visible">
             <div class="text-h5 pa-3" style="font-weight: bold; border-bottom: 2px solid #000;">
-              視程観測装置(富士山方面)の使用状況
+              {{ title }}
             </div>
         </v-container>
 
@@ -28,18 +28,15 @@
                             </v-col>
                             <v-col cols="12" md="6" class="d-flex">
                                 <v-card class="d-flex flex-column align-center justify-center info-card flex-grow-1" style="padding: 20px;">
-                                    <!-- <v-card-item class="d-flex">
-                                        <div class="text-h6 mb-1">{{ usages.title }}</div>
-                                    </v-card-item> -->
                                     <v-row justify="center" align="center">
                                         <v-col cols="6" class="text-center">
-                                            <v-progress-circular :model-value="basicInfos.sdUsage" :size="150" color="primary" class="mb-2" :width="10">
+                                            <v-progress-circular :model-value="basicInfos.sdUsage" :size="120" color="primary" class="mb-2" :width="10">
                                                 {{ basicInfos.sdUsage }} %
                                             </v-progress-circular>
                                             <div class="text-subtitle1">本体使用率</div>
                                         </v-col>
                                         <v-col cols="6" class="text-center">
-                                            <v-progress-circular :model-value="basicInfos.usbUsage" :size="150" color="primary" class="mb-2" :width="10">
+                                            <v-progress-circular :model-value="basicInfos.usbUsage" :size="120" color="primary" class="mb-2" :width="10">
                                                 {{ basicInfos.usbUsage }} %
                                             </v-progress-circular>
                                             <div class="text-subtitle1">USB使用率</div>
@@ -51,16 +48,13 @@
                         <v-row dense>
                             <v-col cols="12" class="d-flex">
                                 <v-card class="d-flex align-center justify-center info-card flex-grow-1">
-                                    <!-- <v-card-item>
-                                        <div class="text-h6 mb-1">{{ usaging.title }}</div>
-                                    </v-card-item> -->
-                                    <canvas id="lineChart" class="line-chart"></canvas>
+                                    <canvas :id="'lineChart-' + deviceId" class="line-chart"></canvas>
                                 </v-card>
                             </v-col>
                         </v-row>
                     </v-container>
                 </v-col>
-        
+
                 <v-col cols="12" md="6" class="d-flex">
                     <v-container fluid class="d-flex flex-column" style="height: 100%;">
                         <v-card class="log-card flex-grow-1">
@@ -94,35 +88,31 @@
         <v-divider class="border-opacity-100"></v-divider>
     </div>
 </template>
-  
-  
+
+
 <script>
 import api from '@/lib/api';
-import { Chart, LinearScale, CategoryScale, Title, Tooltip, Legend, LineElement, LineController, PointElement, plugins } from 'chart.js';
+import { Chart, LinearScale, CategoryScale, Title, Tooltip, Legend, LineElement, LineController, PointElement } from 'chart.js';
 Chart.register(LinearScale, CategoryScale, Title, Tooltip, Legend, LineElement, LineController, PointElement);
 
-
-
 export default {
+  props: {
+    deviceId: {
+      type: String,
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+  },
   data() {
     return {
-      usbUsages: [],
-      Dates: [],
-      cpuTempers: [],
-      Tempers: [],
-      Humis: [],
-      sdCardUsages: [],
       notifyErrorLog: "",
       sendInfoErrorLog: "",
       obsOnceErrorLog: "",
       obsOnceLog: "",
-      Fgo: "",
-      Sgo: "",
-      Tgo: "",
-      basicInfos: {title: "基本情報", time: "", cpuTemp: "", usbUsage: "", sdUsage: "", temp: "", humis: "", operating: ""},
-      usages: {title: "使用率", path: "/", path: "/mnt/usb1", sdUsage: "", usbUsage: ""},
-      usaging: {title: "使用状況"},
-      endpoint: "/3go/usages",
+      basicInfos: { title: "基本情報", time: "", cpuTemp: "", usbUsage: "", sdUsage: "", temp: "", humis: "", operating: "" },
       lineColors: {
         temperature: 'rgba(255, 99, 132, 1)',
         cpuTemperature: 'rgba(255, 165, 38, 1)'
@@ -135,9 +125,8 @@ export default {
   methods: {
     async fetchLogs() {
       try {
-        const response = await api.get("/3go/logs");
+        const response = await api.get(`/${this.deviceId}/logs`);
         const logs = response.data;
-
         this.notifyErrorLog = logs["notify-error.log"];
         this.sendInfoErrorLog = logs["send_info-error.log"];
         this.obsOnceErrorLog = logs["obs-once-error.log"];
@@ -146,10 +135,9 @@ export default {
         console.error("Error fetching logs:", error);
       }
     },
-    async fetchStatus(){
+    async fetchStatus() {
       try {
-        const infos = await api.get("/3go/info");
-
+        const infos = await api.get(`/${this.deviceId}/info`);
         this.basicInfos.time = infos.data.date;
         this.basicInfos.temp = infos.data.temperature;
         this.basicInfos.humis = infos.data.humidity;
@@ -158,109 +146,70 @@ export default {
         this.basicInfos.usbUsage = infos.data.usbUsage;
         this.basicInfos.sdUsage = infos.data.sdCardUsage;
       } catch (error) {
-        console.error("Error fetching logs:", error);
+        console.error("Error fetching status:", error);
       }
     },
     async fetchData() {
-        try {
-            const response = await api.get(this.endpoint);
-            const data = response.data;
+      try {
+        const response = await api.get(`/${this.deviceId}/usages`);
+        const data = response.data;
 
-            console.log("Fetched data:", data);
-
-            if (!data || !data.temperature || !data.cpuTemperature || !data.date) {
-                console.error("API response is missing required fields");
-                return;
-            }
-
-            const times = data.date;
-            const temperatures = data.temperature.filter(temp => temp !== -128); // -128の値を無視
-            const cpuTemperatures = data.cpuTemperature.filter(cpuTemp => cpuTemp !== -128); // -128無視
-
-            const minTemperature = Math.min(...temperatures);
-            const maxTemperature = Math.max(...temperatures);
-            const minCpuTemperature = Math.min(...cpuTemperatures);
-            const maxCpuTemperature = Math.max(...cpuTemperatures);
-            const minValues = [minTemperature, minCpuTemperature];
-            const maxValues = [maxTemperature, maxCpuTemperature];
-            const minValue = Math.min(...minValues);
-            const maxValue = Math.max(...maxValues);
-
-            this.yMinValue = minValue;
-            this.yMaxValue = maxValue;
-
-
-
-            this.drawChart(times, temperatures, cpuTemperatures);
-        } catch (error) {
-            console.error("エラーーー:", error);
+        if (!data || !data.temperature || !data.cpuTemperature || !data.date) {
+          console.error("API response is missing required fields");
+          return;
         }
+
+        const times = data.date;
+        const temperatures = data.temperature.filter(temp => temp !== -128);
+        const cpuTemperatures = data.cpuTemperature.filter(cpuTemp => cpuTemp !== -128);
+
+        const minValue = Math.min(...temperatures, ...cpuTemperatures);
+        const maxValue = Math.max(...temperatures, ...cpuTemperatures);
+        this.yMinValue = minValue;
+        this.yMaxValue = maxValue;
+
+        this.drawChart(times, temperatures, cpuTemperatures);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
     },
     drawChart(labels, temperatures, cpuTemperatures) {
-        const canvas = document.getElementById('lineChart');
-        if (!canvas) {
-            console.error("Canvas not found");
-            return;
-        }
-        Chart.getChart(canvas)?.destroy();
+      const canvas = document.getElementById('lineChart-' + this.deviceId);
+      if (!canvas) {
+        console.error("Canvas not found");
+        return;
+      }
+      Chart.getChart(canvas)?.destroy();
 
-        const mobileScreen = window.innerWidth <= 450;
+      const mobileScreen = window.innerWidth <= 450;
 
-        const chartData = {
-            labels: labels,
-            datasets: [
-                {
-                  label: "Temperature",
-                  data: temperatures,
-                  borderColor: this.lineColors.temperature,
-                  fill: false
-                },
-                {
-                  label: "CPU Temperature",
-                  data: cpuTemperatures,
-                  borderColor: this.lineColors.cpuTemperature,
-                  fill: false
-                }
-            ]
-        };
-
-        const options = {
-            maintainAspectRatio: true,
-            responsive: true,
-            aspectRatio: mobileScreen ? 5/2 : 5/1,
-            plugins: {
-                legend: {
-                    display: !mobileScreen
-                }
+      new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: "Temperature", data: temperatures, borderColor: this.lineColors.temperature, fill: false },
+            { label: "CPU Temperature", data: cpuTemperatures, borderColor: this.lineColors.cpuTemperature, fill: false }
+          ]
+        },
+        options: {
+          maintainAspectRatio: true,
+          responsive: true,
+          aspectRatio: mobileScreen ? 5 / 2 : 5 / 1,
+          plugins: { legend: { display: !mobileScreen } },
+          scales: {
+            y: {
+              min: this.yMinValue,
+              max: this.yMaxValue,
+              beginAtZero: false,
+              ticks: { font: { size: mobileScreen ? 10 : 12 } }
             },
-            scales: {
-                y: {
-                    min: this.yMinValue,
-                    max: this.yMaxValue,
-                    beginAtZero: false,
-                    font: {
-                        size: mobileScreen ? 10 : 12
-                    }
-                },
-                x: {
-                    ticks: {
-                        display: true,
-                        maxTicksLimit: mobileScreen ? 8 : 12, // 450以下の時8つまでx軸表示
-                        Rotation: 0,
-                        font: {
-                            size: mobileScreen ? 10 : 12
-                        }
-                    }
-                }
+            x: {
+              ticks: { display: true, maxTicksLimit: mobileScreen ? 8 : 12, rotation: 0, font: { size: mobileScreen ? 10 : 12 } }
             }
-        };
-
-        const ctx = canvas.getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: chartData,
-            options: options
-        });
+          }
+        }
+      });
     }
   },
   mounted() {
@@ -276,10 +225,10 @@ export default {
   beforeUnmount() {
     clearInterval(this.interval);
   },
-}
+};
 </script>
 
-  
+
 <style scoped>
 .equipments {
     width: 100vw;
@@ -298,6 +247,5 @@ export default {
 
 .line-chart {
     width: 100%;
-  }
+}
 </style>
-  

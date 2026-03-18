@@ -1,8 +1,8 @@
 <!-- pages/observe-image.vue -->
 <template>
-    <obsImages />
+    <ObserveImage />
 </template>
 
 <script setup>
-import obsImages from '@/components/archive/obs_imgs.vue'
+import ObserveImage from '@/components/archive/observe-image.vue';
 </script>
