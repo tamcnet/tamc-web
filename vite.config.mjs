@@ -63,6 +63,7 @@ export default defineConfig({
   },
   server: {
     port: 3030,
+    allowedHosts: ['toms-server.tail2925.ts.net'],
     proxy: {
       '/api': {
         target: 'http://backend:5000',
