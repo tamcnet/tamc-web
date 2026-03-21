@@ -26,15 +26,16 @@
   </v-container>
   <v-container class="mx-auto d-flex align-center justify-center overflow-visible">
     <v-row>
-      <v-col v-for="(item, index) in 3" :key="index" cols="12" md="4">
-        <v-card class="sharp-card" outlined>
-          <v-img
-            :src="MeteorlatestImages[index]"
-            cover
-            :aspect-ratio="16/9"
-          ></v-img>
+      <v-col v-for="index in [0, 1, 2]" :key="index" cols="12" md="4">
+        <v-skeleton-loader v-if="loading" type="image, article" />
+        <v-card v-else class="sharp-card" outlined>
+          <div v-if="!MeteorlatestImages[index]" class="no-data-placeholder">
+              <v-icon size="48" color="grey">mdi-image-off-outline</v-icon>
+              <div class="text-body-1 text-grey mt-2">データなし</div>
+          </div>
+          <v-img v-else :src="MeteorlatestImages[index]" cover :aspect-ratio="16/9"></v-img>
           <v-card-title class="flex-column align-start">
-            <div class="text-h5 mb-2">{{ formatMeteorLog(meteor_logs[index]) }}</div>
+            <div class="text-h5 mb-2">{{ formatMeteorLog(meteor_logs[index]) || 'データなし' }}</div>
           </v-card-title>
           <v-divider class="mx-4"></v-divider>
         </v-card>
@@ -50,8 +51,9 @@ export default {
   name: 'MeteorVideo',
   data() {
     return {
-      MeteorlatestImages: [],
-      meteor_logs: [],
+      loading: true,
+      MeteorlatestImages: [null, null, null],
+      meteor_logs: [null, null, null],
       interval: -1,
       directionMap: {
         'Zenith': '天頂',
@@ -62,50 +64,41 @@ export default {
       }
     };
   },
-  computed: {
-    isSidebarOpen() {
-      return this.$vuetify && this.$vuetify.sidebar && this.$vuetify.sidebar.model;
-    },
-  },
   methods: {
     async fetchMeteorLatestImages() {
-      try {
-        const base = import.meta.env.VITE_API_BASE_URL;
-        const MeteorimageUrl1 = `${base}/Meteor_latest_video`;
-        const MeteorimageUrl2 = `${base}/Meteor_latest2_video`;
-        const MeteorimageUrl3 = `${base}/Meteor_latest3_video`;
-        this.MeteorlatestImages = [MeteorimageUrl1, MeteorimageUrl2, MeteorimageUrl3];
-      } catch (error) {
-        console.error("Error fetching meteor images:", error);
-      }
+      const base = import.meta.env.VITE_API_BASE_URL;
+      this.MeteorlatestImages = [
+        `${base}/Meteor_latest_video`,
+        `${base}/Meteor_latest2_video`,
+        `${base}/Meteor_latest3_video`,
+      ];
     },
     async fetchMeteorinfo() {
-      try {
-        const response_video = await api.get("/Meteor_info");
-        this.meteor_logs = response_video.data;
-      } catch (error) {
-        console.error("Error fetching meteor info:", error);
-      }
+      const [res] = await Promise.allSettled([
+          api.get("/Meteor_info"),
+      ]);
+      this.meteor_logs = res.status === 'fulfilled' ? res.value.data : [null, null, null];
     },
     formatMeteorLog(log) {
       if (!log) return '';
       const parts = log.split(' :');
-      if (parts.length < 2) return log; // フォーマットが異なる場合はそのまま返す
+      if (parts.length < 2) return log;
       const time = parts[0].trim();
       const direction = parts[1].trim();
-      const japaneseDirection = this.directionMap[direction] || direction; // マッピングにない場合はそのまま
+      const japaneseDirection = this.directionMap[direction] || direction;
       return `${time} : ${japaneseDirection}`;
     }
   },
   mounted() {
+    Promise.all([
+        this.fetchMeteorLatestImages(),
+        this.fetchMeteorinfo(),
+    ]).then(() => { this.loading = false; });
+
     this.interval = setInterval(() => {
       this.fetchMeteorLatestImages();
       this.fetchMeteorinfo();
     }, 600000);
-
-
-    this.fetchMeteorLatestImages();
-    this.fetchMeteorinfo();
   },
   beforeUnmount() {
     clearInterval(this.interval);
@@ -118,16 +111,6 @@ export default {
   border-radius: 0 !important;
   background-color: white;
   border: 1px solid #212121;
-}
-
-.parent-card {
-  margin: 2%;
-  padding: 2%;
-  padding-top: 0px;
-}
-
-.sidebar-open.parent-card {
-  margin-left: 250px;
 }
 
 .cross-layout {
@@ -152,30 +135,6 @@ export default {
   transform: translate(-50%, -50%);
 }
 
-.cross-item.top {
-  top: 3%;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.cross-item.bottom {
-  top: 65%;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.cross-item.left {
-  left: 5%;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.cross-item.right {
-  right: 5%;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
 .iframe-wrapper {
   overflow: hidden;
   width: 100%;
@@ -188,5 +147,14 @@ export default {
   height: 100%;
   object-fit: cover;
   position: absolute;
+}
+
+.no-data-placeholder {
+    aspect-ratio: 16/9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f5f5;
 }
 </style>

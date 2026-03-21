@@ -7,23 +7,18 @@
     </v-container>
     <v-container class="mx-auto d-flex align-center justify-center overflow-visible">
       <v-row>
-        <v-col v-for="(item, index) in 2" :key="index" cols="12" md="6">
-          <v-card class="sharp-card" outlined>
-            <v-img
-              :src="LiveImages[index]"
-              cover
-              :aspect-ratio="16/9"
-            ></v-img>
+        <v-col v-for="index in [0, 1]" :key="index" cols="12" md="6">
+          <v-skeleton-loader v-if="loading" type="image, article" />
+          <v-card v-else class="sharp-card" outlined>
+            <div v-if="!LiveImages[index]" class="no-data-placeholder-wide">
+                <v-icon size="48" color="grey">mdi-image-off-outline</v-icon>
+                <div class="text-body-1 text-grey mt-2">データなし</div>
+            </div>
+            <v-img v-else :src="LiveImages[index]" cover :aspect-ratio="16/9"></v-img>
             <v-card-title class="flex-column align-start">
-              <div class="text-h4 mb-2">
-                {{ ['豊川HRO', '大津HRO'][index] }}
-              </div>
-              <div class="text-h6 font-weight-regular text-grey" v-if="index === 0">
-                {{ToyokawalatestTime}}
-              </div>
-              <div class="text-h6 font-weight-regular text-grey" v-if="index === 1">
-                {{OtsulatestTime}}
-              </div>
+              <div class="text-h4 mb-2">{{ ['豊川HRO', '大津HRO'][index] }}</div>
+              <div class="text-h6 font-weight-regular text-grey" v-if="index === 0">{{ ToyokawalatestTime }}</div>
+              <div class="text-h6 font-weight-regular text-grey" v-if="index === 1">{{ OtsulatestTime }}</div>
             </v-card-title>
             <v-divider class="mx-4"></v-divider>
           </v-card>
@@ -38,32 +33,34 @@
     </v-container>
     <v-card :class="{ 'parent-card': true, 'sidebar-open': isSidebarOpen }">
       <v-row>
-        <v-col v-for="(item, index) in 3" :key="index" cols="12" md="4">
-          <v-card class="sharp-card" outlined>
-            <v-img
-              :src="ToyokawalatestMeteorImages[index]"
-              cover
-              :aspect-ratio="16/9"
-            ></v-img>
+        <v-col v-for="index in [0, 1, 2]" :key="`toyo-${index}`" cols="12" md="4">
+          <v-skeleton-loader v-if="loading" type="image, article" />
+          <v-card v-else class="sharp-card" outlined>
+            <div v-if="!ToyokawalatestMeteorImages[index]" class="no-data-placeholder-wide">
+                <v-icon size="48" color="grey">mdi-image-off-outline</v-icon>
+                <div class="text-body-1 text-grey mt-2">データなし</div>
+            </div>
+            <v-img v-else :src="ToyokawalatestMeteorImages[index]" cover :aspect-ratio="16/9"></v-img>
             <v-card-title class="flex-column align-start">
               <div class="text-h4 mb-2">豊川HRO</div>
-              <div class="text-h6 font-weight-regular text-grey">{{ Toyokawa_meteor_logs[index] }}</div>
+              <div class="text-h6 font-weight-regular text-grey">{{ Toyokawa_meteor_logs[index] ?? 'データなし' }}</div>
             </v-card-title>
             <v-divider class="mx-4"></v-divider>
           </v-card>
         </v-col>
       </v-row>
       <v-row>
-        <v-col v-for="(item, index) in 3" :key="index" cols="12" md="4">
-          <v-card class="sharp-card" outlined>
-            <v-img
-              :src="OtsulatestMeteorImages[index]"
-              cover
-              :aspect-ratio="16/9"
-            ></v-img>
+        <v-col v-for="index in [0, 1, 2]" :key="`otsu-${index}`" cols="12" md="4">
+          <v-skeleton-loader v-if="loading" type="image, article" />
+          <v-card v-else class="sharp-card" outlined>
+            <div v-if="!OtsulatestMeteorImages[index]" class="no-data-placeholder-wide">
+                <v-icon size="48" color="grey">mdi-image-off-outline</v-icon>
+                <div class="text-body-1 text-grey mt-2">データなし</div>
+            </div>
+            <v-img v-else :src="OtsulatestMeteorImages[index]" cover :aspect-ratio="16/9"></v-img>
             <v-card-title class="flex-column align-start">
               <div class="text-h4 mb-2">大津HRO</div>
-              <div class="text-h6 font-weight-regular text-grey">{{ Otsu_meteor_logs[index] }}</div>
+              <div class="text-h6 font-weight-regular text-grey">{{ Otsu_meteor_logs[index] ?? 'データなし' }}</div>
             </v-card-title>
             <v-divider class="mx-4"></v-divider>
           </v-card>
@@ -80,15 +77,14 @@ export default {
   name: 'MeteorRadio',
   data() {
     return {
-      ToyokawalatestImage: '',
-      OtsulatestImage: '',
+      loading: true,
       ToyokawalatestTime: '',
       OtsulatestTime: '',
-      LiveImages: [],
-      ToyokawalatestMeteorImages: [],
-      OtsulatestMeteorImages: [],
-      Toyokawa_meteor_logs: [],
-      Otsu_meteor_logs: [],
+      LiveImages: [null, null],
+      ToyokawalatestMeteorImages: [null, null, null],
+      OtsulatestMeteorImages: [null, null, null],
+      Toyokawa_meteor_logs: [null, null, null],
+      Otsu_meteor_logs: [null, null, null],
       interval: -1,
     };
   },
@@ -99,62 +95,45 @@ export default {
   },
   methods: {
     async fetchMeteorLatestImages() {
-      try {
-        const base = import.meta.env.VITE_API_BASE_URL;
-        const ToyokawaimageUrl1 = `${base}/Toyokawa_latest_img`;
-        const OtsuimageUrl1 = `${base}/Otsu_latest_img`;
-        const ToyokawaMeteorimageUrl1 = `${base}/Toyokawa_latest_meteor_img`;
-        const ToyokawaMeteorimageUrl2 = `${base}/Toyokawa_latest2_meteor_img`;
-        const ToyokawaMeteorimageUrl3 = `${base}/Toyokawa_latest3_meteor_img`;
-        const OtsuMeteorimageUrl1 = `${base}/Otsu_latest_meteor_img`;
-        const OtsuMeteorimageUrl2 = `${base}/Otsu_latest2_meteor_img`;
-        const OtsuMeteorimageUrl3 = `${base}/Otsu_latest3_meteor_img`;
-
-        this.ToyokawalatestImage = ToyokawaimageUrl1;
-        this.OtsulatestImage = OtsuimageUrl1;
-        this.LiveImages = [
-          ToyokawaimageUrl1,
-          OtsuimageUrl1
-        ]
-        this.ToyokawalatestMeteorImages = [
-          ToyokawaMeteorimageUrl1,
-          ToyokawaMeteorimageUrl2,
-          ToyokawaMeteorimageUrl3,
-        ];
-        this.OtsulatestMeteorImages = [
-          OtsuMeteorimageUrl1,
-          OtsuMeteorimageUrl2,
-          OtsuMeteorimageUrl3,
-        ];
-      } catch (error) {
-        console.error("Error fetching latest images:", error);
-      }
+      const base = import.meta.env.VITE_API_BASE_URL;
+      this.LiveImages = [
+        `${base}/Toyokawa_latest_img`,
+        `${base}/Otsu_latest_img`,
+      ];
+      this.ToyokawalatestMeteorImages = [
+        `${base}/Toyokawa_latest_meteor_img`,
+        `${base}/Toyokawa_latest2_meteor_img`,
+        `${base}/Toyokawa_latest3_meteor_img`,
+      ];
+      this.OtsulatestMeteorImages = [
+        `${base}/Otsu_latest_meteor_img`,
+        `${base}/Otsu_latest2_meteor_img`,
+        `${base}/Otsu_latest3_meteor_img`,
+      ];
     },
     async fetchMeteorInfo() {
-      try {
-        const response_toyokawa = await api.get("/Toyokawa_info");
-        const response_otsu = await api.get("/Otsu_info");
-        const response_meteor_toyokawa = await api.get("/Toyokawa_meteor_info");
-        const response_meteor_otsu = await api.get("/Otsu_meteor_info");
-
-        this.ToyokawalatestTime = response_toyokawa.data;
-        this.OtsulatestTime = response_otsu.data;
-        this.Toyokawa_meteor_logs = response_meteor_toyokawa.data;
-        this.Otsu_meteor_logs = response_meteor_otsu.data;
-      } catch (error) {
-        console.error("Error fetching meteor info:", error);
-      }
+      const [toyokawa, otsu, meteorToyokawa, meteorOtsu] = await Promise.allSettled([
+          api.get("/Toyokawa_info"),
+          api.get("/Otsu_info"),
+          api.get("/Toyokawa_meteor_info"),
+          api.get("/Otsu_meteor_info"),
+      ]);
+      this.ToyokawalatestTime = toyokawa.status === 'fulfilled' ? toyokawa.value.data : '';
+      this.OtsulatestTime = otsu.status === 'fulfilled' ? otsu.value.data : '';
+      this.Toyokawa_meteor_logs = meteorToyokawa.status === 'fulfilled' ? meteorToyokawa.value.data : [null, null, null];
+      this.Otsu_meteor_logs = meteorOtsu.status === 'fulfilled' ? meteorOtsu.value.data : [null, null, null];
     },
   },
   mounted() {
+    Promise.all([
+        this.fetchMeteorLatestImages(),
+        this.fetchMeteorInfo(),
+    ]).then(() => { this.loading = false; });
+
     this.interval = setInterval(() => {
       this.fetchMeteorLatestImages();
       this.fetchMeteorInfo();
-    }, 600000); 
-
-
-    this.fetchMeteorLatestImages();
-    this.fetchMeteorInfo();
+    }, 600000);
   },
   beforeUnmount() {
     clearInterval(this.interval);
@@ -174,7 +153,16 @@ export default {
 }
 
 .sharp-card {
-  border-radius: 0 !important; 
-  border: 1px solid #000 !important; 
+  border-radius: 0 !important;
+  border: 1px solid #000 !important;
+}
+
+.no-data-placeholder-wide {
+    aspect-ratio: 16/9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f5f5;
 }
 </style>

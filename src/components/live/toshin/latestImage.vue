@@ -7,20 +7,21 @@
         </v-container>
         <v-container class="mx-auto d-flex align-center justify-center overflow-visible">
             <v-row justify="space-between" align="stretch" style="width: 100%;">
-                <v-col v-for="(media, index) in latestMedias" :key="index" cols="12" sm="6" md="4" lg="4">
-                    <v-card class="black-card" height="100%">
-                        <v-img
-                          :src="latestMedias[index]"
-                          cover
-                          :aspect-ratio="3/2"
-                        ></v-img>
+                <v-col v-for="index in [0, 1, 2]" :key="index" cols="12" sm="6" md="4" lg="4">
+                    <v-skeleton-loader v-if="loading" type="image, article" class="skeleton-dark" />
+                    <v-card v-else class="black-card" height="100%">
+                        <div v-if="!latestMedias[index]" class="no-data-placeholder">
+                            <v-icon size="48" color="grey">mdi-image-off-outline</v-icon>
+                            <div class="text-body-1 text-grey mt-2">データなし</div>
+                        </div>
+                        <v-img v-else :src="latestMedias[index]" cover :aspect-ratio="3/2"></v-img>
                         <v-card-title class="flex-column align-start white-text" style="height: auto; display: block;">
-                            <div class="text-h4 mb-2" style="white-space: pre-line;">視程距離: {{ visDis[latestResult[index]] }}</div>
+                            <div class="text-h4 mb-2" style="white-space: pre-line;">視程距離: {{ visDis[latestResult[index]] ?? 'データなし' }}</div>
                             <div class="text-h5 font-weight-regular white-text mb-2" style="white-space: pre-line;">
-                                {{ observedTimes[index] }}
+                                {{ observedTimes[index] ?? '' }}
                             </div>
                             <div class="text-h6 font-weight-regular text-grey" style="white-space: pre-line;">
-                                {{ obsEx[latestResult[index]] }}
+                                {{ obsEx[latestResult[index]] ?? '' }}
                             </div>
                         </v-card-title>
                     </v-card>
@@ -38,75 +39,66 @@ import { visDis, obsEx } from '@/lib/constants';
 export default {
     data() {
         return {
-            latestMedias: [],
+            loading: true,
+            latestMedias: [null, null, null],
             visDis,
             obsEx,
-            latestResult: [],
-            observedTimes: [],
+            latestResult: [null, null, null],
+            observedTimes: [null, null, null],
             interval: -1,
         };
     },
     methods: {
         async fetchlatestMedias() {
-            try {
-                const visTree1 = await api.get("/latest_image", { responseType: 'blob' });
-                const visTree2 = await api.get("/10minago_image", { responseType: 'blob' });
-                const visTree3 = await api.get("/20minago_image", { responseType: 'blob' });
-                // 古い Blob URL を解放
-                this.latestMedias.forEach(url => URL.revokeObjectURL(url));
-
-                const visTree1Blob = new Blob([visTree1.data]);
-                const visTree2Blob = new Blob([visTree2.data]);
-                const visTree3Blob = new Blob([visTree3.data]);
-              
-              this.latestMedias = [
-                  URL.createObjectURL(visTree1Blob),
-                  URL.createObjectURL(visTree2Blob),
-                  URL.createObjectURL(visTree3Blob)
-              ];
-            } catch (error) {
-                console.log("Error fetching latestMedias:", error);
-            }
+            const [r1, r2, r3] = await Promise.allSettled([
+                api.get("/latest_image", { responseType: 'blob' }),
+                api.get("/10minago_image", { responseType: 'blob' }),
+                api.get("/20minago_image", { responseType: 'blob' }),
+            ]);
+            this.latestMedias.forEach(url => { if (url) URL.revokeObjectURL(url); });
+            this.latestMedias = [
+                r1.status === 'fulfilled' ? URL.createObjectURL(new Blob([r1.value.data])) : null,
+                r2.status === 'fulfilled' ? URL.createObjectURL(new Blob([r2.value.data])) : null,
+                r3.status === 'fulfilled' ? URL.createObjectURL(new Blob([r3.value.data])) : null,
+            ];
         },
         async fetchlatestResults() {
-            try {
-                const latest_class = await api.get("/latest_class");
-                const tenmin_class = await api.get("/10minago_class");
-                const twemin_class = await api.get("/20minago_class");
-                const visTreeRes1 = latest_class.data[0];
-                const visTreeRes2 = tenmin_class.data[0];
-                const visTreeRes3 = twemin_class.data[0];
-                this.latestResult = [visTreeRes1, visTreeRes2, visTreeRes3];
-            } catch (error) {
-                console.log("Error fetching latestResults: ", error);
-            }
+            const [r1, r2, r3] = await Promise.allSettled([
+                api.get("/latest_class"),
+                api.get("/10minago_class"),
+                api.get("/20minago_class"),
+            ]);
+            this.latestResult = [
+                r1.status === 'fulfilled' ? r1.value.data[0] : null,
+                r2.status === 'fulfilled' ? r2.value.data[0] : null,
+                r3.status === 'fulfilled' ? r3.value.data[0] : null,
+            ];
         },
         async fetchObservedTime() {
-            try {
-                const latest_time = await api.get("/latest_info");
-                const tenmin_time = await api.get("/10minago_info");
-                const twemin_time = await api.get("/20minago_info");
-
-                const visTreeTime1 = latest_time.data.time;
-                const visTreeTime2 = tenmin_time.data.time;
-                const visTreeTime3 = twemin_time.data.time;
-
-                this.observedTimes = [visTreeTime1, visTreeTime2, visTreeTime3];
-            } catch(error) {
-                console.log("Error fetching observedTimes:", error);
-            }
-        }
+            const [r1, r2, r3] = await Promise.allSettled([
+                api.get("/latest_info"),
+                api.get("/10minago_info"),
+                api.get("/20minago_info"),
+            ]);
+            this.observedTimes = [
+                r1.status === 'fulfilled' ? r1.value.data.time : null,
+                r2.status === 'fulfilled' ? r2.value.data.time : null,
+                r3.status === 'fulfilled' ? r3.value.data.time : null,
+            ];
+        },
     },
     mounted() {
+        Promise.all([
+            this.fetchlatestMedias(),
+            this.fetchlatestResults(),
+            this.fetchObservedTime(),
+        ]).then(() => { this.loading = false; });
+
         this.interval = setInterval(() => {
             this.fetchlatestMedias();
             this.fetchlatestResults();
             this.fetchObservedTime();
         }, 600000);
-
-        this.fetchlatestMedias();
-        this.fetchlatestResults();
-        this.fetchObservedTime();
     },
     beforeUnmount() {
         clearInterval(this.interval);
@@ -120,12 +112,6 @@ export default {
     background-color: white;
 }
 
-.full-width-row {
-    width: 100vw;
-    max-width: 100vw;
-    margin: 0;
-}
-
 .black-card {
   background-color: black;
   border: 5px solid #212121;
@@ -134,5 +120,22 @@ export default {
 
 .white-text {
   color: white;
+}
+
+.no-data-placeholder {
+    aspect-ratio: 3/2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #1a1a1a;
+}
+
+.skeleton-dark :deep(.v-skeleton-loader__bone) {
+    background-color: #2a2a2a;
+}
+
+.skeleton-dark {
+    background-color: #212121;
 }
 </style>

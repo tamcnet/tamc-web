@@ -7,18 +7,20 @@
     </v-container>
     <v-container class="mx-auto d-flex align-center justify-center overflow-visible">
       <v-row>
-        <v-col v-for="(item, index) in 2" :key="index" cols="12" md="6">
-          <v-card class="sharp-card" outlined>
-            <v-img
-              :src="SunspotImages[index]"
-              cover
-            ></v-img>            
+        <v-col v-for="index in [0, 1]" :key="index" cols="12" md="6">
+          <v-skeleton-loader v-if="loading" type="image, article" />
+          <v-card v-else class="sharp-card" outlined>
+            <div v-if="!SunspotImages[index]" class="no-data-placeholder">
+                <v-icon size="48" color="grey">mdi-image-off-outline</v-icon>
+                <div class="text-body-1 text-grey mt-2">データなし</div>
+            </div>
+            <v-img v-else :src="SunspotImages[index]" cover></v-img>
             <v-card-title class="flex-column align-start">
               <div class="text-h4 pa-3" style="font-weight: bold;" v-if="index === 0">
-                最新の観測日: {{ latestSunInfo.date }}
+                最新の観測日: {{ latestSunInfo.date ?? 'データなし' }}
               </div>
               <div class="text-h4 pa-3" style="font-weight: bold;" v-if="index === 1">
-                黒点面積: {{ latestSunInfo.total_area }} pixel
+                黒点面積: {{ latestSunInfo.total_area != null ? `${latestSunInfo.total_area} pixel` : 'データなし' }}
               </div>
             </v-card-title>
           </v-card>
@@ -35,59 +37,54 @@ export default {
   name: 'Sunspots',
   data() {
     return {
-      latestSunImage: "",      // 元画像のURL
-      contourSunImage: "",     // 検出画像のURL
-      latestSunInfo: {},       // APIからのレスポンス全体を保持
-      SunspotImages: [],
+      loading: true,
+      latestSunInfo: {},
+      SunspotImages: [null, null],
+      interval: -1,
     };
   },
   methods: {
     async fetchSunInfos() {
-      try {
-        const response = await api.get("/manualReport/sunspot/info");
-        // 画像URLを直接使用
-        this.latestSunImage = `${import.meta.env.VITE_API_BASE_URL}${response.data.image_url}`;
-        this.contourSunImage = `${import.meta.env.VITE_API_BASE_URL}${response.data.contour_image_url}`;
-        this.latestSunInfo = response.data;
+      const [res] = await Promise.allSettled([
+          api.get("/manualReport/sunspot/info"),
+      ]);
+      if (res.status === 'fulfilled') {
+        this.latestSunInfo = res.value.data;
         this.SunspotImages = [
-          this.latestSunImage,
-          this.contourSunImage,
+          `${import.meta.env.VITE_API_BASE_URL}${res.value.data.image_url}`,
+          `${import.meta.env.VITE_API_BASE_URL}${res.value.data.contour_image_url}`,
         ];
-      } catch (error) {
-        console.error("Error fetching latest sunspot data:", error);
+      } else {
+        this.latestSunInfo = {};
+        this.SunspotImages = [null, null];
       }
     },
   },
   mounted() {
+    this.fetchSunInfos().then(() => { this.loading = false; });
+
     this.interval = setInterval(() => {
       this.fetchSunInfos();
-    }, 600000); // 10分ごとに更新
-    this.fetchSunInfos();
+    }, 600000);
   },
   beforeUnmount() {
     clearInterval(this.interval);
   },
-  computed: {
-    isSidebarOpen() {
-      return this.$vuetify && this.$vuetify.sidebar && this.$vuetify.sidebar.model;
-    }
-  }
 };
 </script>
 
 <style scoped>
-.parent-card {
-  margin: 2%;
-  padding: 2%;
-  padding-top: 0px;
-}
-
-.sidebar-open.parent-card {
-  margin-left: 250px;
-}
-
 .sharp-card {
-  border-radius: 0 !important; 
-  border: 1px solid #000 !important; 
+  border-radius: 0 !important;
+  border: 1px solid #000 !important;
+}
+
+.no-data-placeholder {
+    aspect-ratio: 4/3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f5f5;
 }
 </style>
