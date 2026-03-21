@@ -128,82 +128,54 @@ export default {
     },
     methods: {
         async fetchlatestMedias() {
-            // Meteorology データ
-            try {
-                const visTree = await api.get("/latest_image", { responseType: 'blob' });
-                const visFuji = await api.get("/Fuji_latest_image", { responseType: 'blob' });
-                this.meteorologyData.medias.forEach(url => {
-                    if (url.startsWith('blob:')) URL.revokeObjectURL(url);
-                });
-                this.meteorologyData.medias = [
-                    URL.createObjectURL(new Blob([visTree.data])),
-                    URL.createObjectURL(new Blob([visFuji.data])),
-                ];
-            } catch (error) {
-                console.log("Error fetching meteorology medias:", error);
-            }
-            // Astronomy データ
-            try {
-                const metVideo = `${import.meta.env.VITE_API_BASE_URL}/Meteor_latest_video`;
-                const sunspotImage = await api.get("/manualReport/sunspot/info");
-                this.astronomyData.medias.forEach(url => {
-                    if (url.startsWith('blob:')) URL.revokeObjectURL(url);
-                });
-                this.astronomyData.medias = [
-                    metVideo,
-                    `${import.meta.env.VITE_API_BASE_URL}${sunspotImage.data.image_url}`,
-                ];
-            } catch (error) {
-                console.log("Error fetching astronomy medias:", error);
-            }
+            const [visTree, visFuji, sunspotImage] = await Promise.allSettled([
+                api.get("/latest_image", { responseType: 'blob' }),
+                api.get("/Fuji_latest_image", { responseType: 'blob' }),
+                api.get("/manualReport/sunspot/info"),
+            ]);
+            this.meteorologyData.medias.forEach(url => {
+                if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
+            });
+            this.meteorologyData.medias = [
+                visTree.status === 'fulfilled' ? URL.createObjectURL(new Blob([visTree.value.data])) : null,
+                visFuji.status === 'fulfilled' ? URL.createObjectURL(new Blob([visFuji.value.data])) : null,
+            ];
+            this.astronomyData.medias = [
+                `${import.meta.env.VITE_API_BASE_URL}/Meteor_latest_video`,
+                sunspotImage.status === 'fulfilled' ? `${import.meta.env.VITE_API_BASE_URL}${sunspotImage.value.data.image_url}` : null,
+            ];
         },
         async fetchlatestResults() {
-            // Meteorology データ
-            try {
-                const latest_class = await api.get("/latest_class");
-                const Fujilatest_class = await api.get("/Fuji_latest_class");
-                this.meteorologyData.results = [
-                    this.visDis[latest_class.data[0]],
-                    this.Fujiobs[Fujilatest_class.data[0]],
-                ];
-            } catch (error) {
-                console.log("Error fetching meteorology results:", error);
-            }
-            // Astronomy データ
-            try {
-                const meteor_dir = await api.get("/Meteor_info");
-                const sunspotInfo = await api.get("/manualReport/sunspot/info");
-                this.astronomyData.results = [
-                    meteor_dir.data[0],
-                    sunspotInfo.data.total_area,
-                ];
-            } catch (error) {
-                console.log("Error fetching astronomy results:", error);
-            }
+            const [latest_class, Fujilatest_class, meteor_dir, sunspotInfo] = await Promise.allSettled([
+                api.get("/latest_class"),
+                api.get("/Fuji_latest_class"),
+                api.get("/Meteor_info"),
+                api.get("/manualReport/sunspot/info"),
+            ]);
+            this.meteorologyData.results = [
+                latest_class.status === 'fulfilled' ? this.visDis[latest_class.value.data[0]] : null,
+                Fujilatest_class.status === 'fulfilled' ? this.Fujiobs[Fujilatest_class.value.data[0]] : null,
+            ];
+            this.astronomyData.results = [
+                meteor_dir.status === 'fulfilled' ? meteor_dir.value.data[0] : null,
+                sunspotInfo.status === 'fulfilled' ? sunspotInfo.value.data.total_area : null,
+            ];
         },
         async fetchObservedTime() {
-            // Meteorology データ
-            try {
-                const latest_time = await api.get("/latest_info");
-                const Fujilatest_time = await api.get("/Fuji_latest_info");
-                this.meteorologyData.times = [
-                    latest_time.data.time,
-                    Fujilatest_time.data.time,
-                ];
-            } catch(error) {
-                console.log("Error fetching meteorology times:", error);
-            }
-            // Astronomy データ
-            try {
-                const meteor_time = await api.get("/Meteor_info");
-                const sunspotInfo = await api.get("/manualReport/sunspot/info");
-                this.astronomyData.times = [
-                    meteor_time.data[0],
-                    sunspotInfo.data.date,
-                ];
-            } catch(error) {
-                console.log("Error fetching astronomy times:", error);
-            }
+            const [latest_time, Fujilatest_time, meteor_time, sunspotInfo] = await Promise.allSettled([
+                api.get("/latest_info"),
+                api.get("/Fuji_latest_info"),
+                api.get("/Meteor_info"),
+                api.get("/manualReport/sunspot/info"),
+            ]);
+            this.meteorologyData.times = [
+                latest_time.status === 'fulfilled' ? latest_time.value.data.time : null,
+                Fujilatest_time.status === 'fulfilled' ? Fujilatest_time.value.data.time : null,
+            ];
+            this.astronomyData.times = [
+                meteor_time.status === 'fulfilled' ? meteor_time.value.data[0] : null,
+                sunspotInfo.status === 'fulfilled' ? sunspotInfo.value.data.date : null,
+            ];
         },
         getTime(result) {
             if (!result) return '';
