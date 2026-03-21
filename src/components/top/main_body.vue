@@ -128,84 +128,81 @@ export default {
     },
     methods: {
         async fetchlatestMedias() {
+            // Meteorology データ
             try {
-                // Meteorology データ
                 const visTree = await api.get("/latest_image", { responseType: 'blob' });
                 const visFuji = await api.get("/Fuji_latest_image", { responseType: 'blob' });
-                // Astronomy データ
-                const metVideo = `${import.meta.env.VITE_API_BASE_URL}/Meteor_latest_video`;
-                const sunspotImage = await api.get("/manualReport/sunspot/info");
-                
-                // 古い Blob URL を解放
                 this.meteorologyData.medias.forEach(url => {
                     if (url.startsWith('blob:')) URL.revokeObjectURL(url);
                 });
+                this.meteorologyData.medias = [
+                    URL.createObjectURL(new Blob([visTree.data])),
+                    URL.createObjectURL(new Blob([visFuji.data])),
+                ];
+            } catch (error) {
+                console.log("Error fetching meteorology medias:", error);
+            }
+            // Astronomy データ
+            try {
+                const metVideo = `${import.meta.env.VITE_API_BASE_URL}/Meteor_latest_video`;
+                const sunspotImage = await api.get("/manualReport/sunspot/info");
                 this.astronomyData.medias.forEach(url => {
                     if (url.startsWith('blob:')) URL.revokeObjectURL(url);
                 });
-
-                const visTreeBlob = new Blob([visTree.data]);
-                const visFujiBlob = new Blob([visFuji.data]);
-                const sunspotImageUrl = `${import.meta.env.VITE_API_BASE_URL}${sunspotImage.data.image_url}`;
-                
-                this.meteorologyData.medias = [
-                    URL.createObjectURL(visTreeBlob),
-                    URL.createObjectURL(visFujiBlob)
-                ];
                 this.astronomyData.medias = [
                     metVideo,
-                    sunspotImageUrl
+                    `${import.meta.env.VITE_API_BASE_URL}${sunspotImage.data.image_url}`,
                 ];
             } catch (error) {
-                console.log("Error fetching latestMedias:", error);
+                console.log("Error fetching astronomy medias:", error);
             }
         },
         async fetchlatestResults() {
+            // Meteorology データ
             try {
                 const latest_class = await api.get("/latest_class");
                 const Fujilatest_class = await api.get("/Fuji_latest_class");
-                const meteor_dir = await api.get("/Meteor_info");
-                const sunspotInfo = await api.get("/manualReport/sunspot/info");
-                
-                const visTreeRes = latest_class.data[0];
-                const fujivisRes = Fujilatest_class.data[0];
-                const meteorRes = meteor_dir.data[0];
-                const sunspotArea = sunspotInfo.data.total_area;
-                
                 this.meteorologyData.results = [
-                    this.visDis[visTreeRes],
-                    this.Fujiobs[fujivisRes]
-                ];
-                this.astronomyData.results = [
-                    meteorRes,
-                    sunspotArea
+                    this.visDis[latest_class.data[0]],
+                    this.Fujiobs[Fujilatest_class.data[0]],
                 ];
             } catch (error) {
-                console.log("Error fetching latestResults: ", error);
+                console.log("Error fetching meteorology results:", error);
+            }
+            // Astronomy データ
+            try {
+                const meteor_dir = await api.get("/Meteor_info");
+                const sunspotInfo = await api.get("/manualReport/sunspot/info");
+                this.astronomyData.results = [
+                    meteor_dir.data[0],
+                    sunspotInfo.data.total_area,
+                ];
+            } catch (error) {
+                console.log("Error fetching astronomy results:", error);
             }
         },
         async fetchObservedTime() {
+            // Meteorology データ
             try {
                 const latest_time = await api.get("/latest_info");
                 const Fujilatest_time = await api.get("/Fuji_latest_info");
-                const meteor_time = await api.get("/Meteor_info");
-                const sunspotInfo = await api.get("/manualReport/sunspot/info");
-
-                const visTreeTime = latest_time.data.time;
-                const visFujiTime = Fujilatest_time.data.time;
-                const meteor_logs = meteor_time.data;
-                const sunspotTime = sunspotInfo.data.date;
-
                 this.meteorologyData.times = [
-                    visTreeTime,
-                    visFujiTime
-                ];
-                this.astronomyData.times = [
-                    meteor_logs[0],
-                    sunspotTime
+                    latest_time.data.time,
+                    Fujilatest_time.data.time,
                 ];
             } catch(error) {
-                console.log("Error fetching observedTimes:", error);
+                console.log("Error fetching meteorology times:", error);
+            }
+            // Astronomy データ
+            try {
+                const meteor_time = await api.get("/Meteor_info");
+                const sunspotInfo = await api.get("/manualReport/sunspot/info");
+                this.astronomyData.times = [
+                    meteor_time.data[0],
+                    sunspotInfo.data.date,
+                ];
+            } catch(error) {
+                console.log("Error fetching astronomy times:", error);
             }
         },
         getTime(result) {
